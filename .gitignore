@@ -1,0 +1,8 @@
+**__pycache__
+**GTSRB**
+notebooks
+model-vitsae
+record-vitsae
+.env
+.venv
+.vscode

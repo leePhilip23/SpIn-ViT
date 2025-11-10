@@ -21,6 +21,8 @@ def main(args):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         train_dataloader, val_dataloader, _, num_classes, _ = get_dataloader()
         train_model(args, device, train_dataloader, val_dataloader, num_classes)
+
+        #get_top_k(args)
     else:
         print("Getting top-k neurons...")
         get_top_k(args)
@@ -32,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("--train", type=str, default="true", help="Whether to train the model or not")
 
     # Train parameters
-    parser.add_argument("--dataset_name", type=str, default="gtsrb", help="The dataset used")
+    parser.add_argument("--dataset_name", type=str, default="pets", help="The dataset used")
     parser.add_argument("--model_dir", type=str, default="model-vitsae", help="The directory where the model will be saved.")
     parser.add_argument("--log_dir", type=str, default="record-vitsae", help="The directory where the log will be saved.")
     parser.add_argument("--num_epochs", type=int, default=50, help="The number of epochs to train the model.")
@@ -41,25 +43,25 @@ if __name__ == '__main__':
     parser.add_argument(
         "--vit_sae_model_pth",
         type=str,
-        default=os.path.join("model-vitsae", "gtsrb", "best_model_ce_cs-1.pth"),
+        default=os.path.join("model-vitsae", "pets", "best_model_pets.pth"),
         help="Path to the ViViT model file.",
     )
     parser.add_argument(
         "--activations_dir",
         type=str,
-        default=os.path.join("activations", "gtsrb"),
+        default=os.path.join("activations", "pets"),
         help="Directory to save the activations files.",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default=os.path.join("record-vitsae", "gtsrb"),
+        default=os.path.join("record-vitsae", "pets"),
         help="Directory to save the output files.",
     )
     parser.add_argument(
         "--output_txt_file",
         type=str,
-        default=os.path.join("record-vitsae", "gtsrb", "top_k_neurons.txt"),
+        default=os.path.join("record-vitsae", "pets", "top_k_neurons.txt"),
         help="Path to the output text file.",
     )
 

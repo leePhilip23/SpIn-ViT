@@ -1,13 +1,51 @@
 import os
 import copy
+import glob
 import heapq
 import shutil
 import torch
 import torch.nn as nn
 import numpy as np
+from datasets import load_from_disk, load_dataset
 from models.vit_sae import ViTSAE
-from utils.dataloader import GTSRB_dataloaders, Flowers102Dataset
+from utils.dataloader import (
+    GTSRB_dataloaders, 
+    PLACES_dataloaders, 
+    CatsDogsDataset, 
+    Flowers102Dataset, 
+    HuggingFaceData,
+    FolderData
+)
 from torch.utils.data import DataLoader 
+from sklearn.model_selection import train_test_split
+from PIL import Image
+
+
+def is_valid_image(path: str) -> bool:
+    try:
+        with Image.open(path) as img:
+            img.verify()   # lightweight integrity check
+        return True
+    except OSError:
+        print("Warning")
+        return False
+    except Exception:
+        print(path)
+        return False
+    
+
+
+def is_val_image(img: Image) -> bool:
+    try:
+        img.verify()   # lightweight integrity check
+        return True
+    except OSError:
+        print("Warning")
+        return False
+    except Exception:
+        print("Exception")
+        return False
+    
 
 
 def load_vivit_sae_model(args, num_classes):
@@ -59,7 +97,8 @@ def cache_activations(args, vit_sae, test_dataloader, sample_batch=2):
     img_files = []
     os.makedirs(args.activations_dir, exist_ok=True)
 
-    for i, (file, image, label) in enumerate(test_dataloader):
+    for i, data in enumerate(test_dataloader):
+        file, image, label = data[0], data[1], data[2]
         if sample_batch <= 0:
             break
 
@@ -71,12 +110,13 @@ def cache_activations(args, vit_sae, test_dataloader, sample_batch=2):
             output_file = os.path.join(args.activations_dir, f"{os.path.splitext(os.path.basename(file[i]))[0]}_activations_{label[i]}.npy")
             if os.path.exists(output_file):
                 continue
-            img_files.append(f"{file[i]}.ppm")
+            img_files.append(f"{file[i]}")
             image_tensor = copy.deepcopy(image[i]).unsqueeze(0)
             sae_features = vit_sae_forward(vit_sae, image_tensor)
 
             # Save activations as .npy file
             np.save(output_file, sae_features.numpy())
+            #torch.save(image[i], f"{output_file[:-4]}.pt")
         
         sample_batch -= 1
 
@@ -100,18 +140,99 @@ def get_dataloader():
     """
     
     # Load the training dataset
-    train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = GTSRB_dataloaders()
+    #train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = GTSRB_dataloaders()
+    dataset_name = ""
+    if dataset_name == "PLACES2":
+        train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = PLACES_dataloaders(
+            class_list=["bathroom", "bedroom"],train_shuffle=True)
+    if dataset_name == "PLACES3":
+        train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = PLACES_dataloaders(
+            class_list=["bathroom", "bedroom", "kitchen"],train_shuffle=True)
+    if dataset_name == "PLACES5":
+        train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = PLACES_dataloaders(
+            class_list=["bathroom", "bedroom", "kitchen", "dining_room", "living_room"],train_shuffle=True)
+    if dataset_name == "PLACES10":
+        train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights = PLACES_dataloaders(
+            class_list=["bathroom", "bedroom", "kitchen", "dining_room", "living_room", "home_office", "office",
+                        "waiting_room", "conference_room", "hotel_room"],train_shuffle=True)
+        
+
+    """
+    files = [
+        f for f in glob.glob("data/raw/pets/**/*", recursive=True)
+        if os.path.isfile(f) 
+        and "db" not in f
+        and is_valid_image(f)
+    ]
+    
+    labels = [path.split('/')[-2].split('.')[0] for path in files]
+    """
+
+    """
+    data = load_from_disk("data/raw/cats_vs_dogs")
+    files, labels = [], []
+    for d in data:
+        img, label = d['image'], d['labels']
+        if not is_val_image(img):
+            continue
+        
+        files.append(img)
+        labels.append(label)
+    """
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        files,
+        labels,
+        test_size=0.2,
+        stratify=labels,
+        random_state=1
+    )
+
+    train_data = None
+    val_data = CatsDogsDataset(X_test, y_test, inference=True)
+    train_dataloader = None
+    test_dataloader = DataLoader(val_data, batch_size=8, shuffle=False, num_workers=0, pin_memory=True)
+    val_dataloader, num_classes, class_weights = None, 2, None
     
     """
-    num_classes, class_weights = 102, None
-    data_train = Flowers102Dataset("train")
-    data_val = Flowers102Dataset("val")
-    data_test = Flowers102Dataset("test")
 
-    train_dataloader = DataLoader(data_train, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
-    val_dataloader = DataLoader(data_val, batch_size=32, shuffle=False, num_workers=4, pin_memory=True)
-    test_dataloader = DataLoader(data_test, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
+    #num_classes, class_weights = 102, None
+    #data_train = Flowers102Dataset("train")
+    #data_val = Flowers102Dataset("valid")
+    #data_test = Flowers102Dataset("valid", inference=True)
+
+    #num_classes, class_weights = 102, None
+    #data_train = Flowers102Dataset("train")
+    #data_val = Flowers102Dataset("valid")
+
+    #num_classes, class_weights = 196, None
+    #data_test = FolderData("data/raw/cars/test", inference=True)
+
+    #num_classes, class_weights = 100, None
+    #data_test = FolderData("data/raw/fgvc/test", inference=True, csv="data/raw/fgvc/test.csv")
+
+    #num_classes, class_weights = 102, None
+    #data = load_dataset(
+    #    "HuggingFaceM4/Caltech-101",
+    #    "with_background_category"
+    #).shuffle(seed=1)
+    
+    #data_test = HuggingFaceData(data, split='test', inference=True)
+
     """
+    num_classes, class_weights = 47, None
+    data = load_dataset("tanganke/dtd")
+    data_train = HuggingFaceData(data, split='train')
+    data_val = HuggingFaceData(data, split='test')
+    """
+    num_classes, class_weights = 10, None
+    data = load_dataset("timm/eurosat-rgb")
+    data_test = HuggingFaceData(data, split='validation')
+    #"""
+
+    train_dataloader = None
+    val_dataloader = None
+    test_dataloader = DataLoader(data_test, batch_size=8, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_dataloader, val_dataloader, test_dataloader, num_classes, class_weights
 
@@ -132,13 +253,15 @@ def get_top_k(args):
     vit_sae = load_vivit_sae_model(args, num_classes)
     img_files = cache_activations(args, vit_sae, test_dataloader)
 
-    num_activations = 768 * 16
+    num_activations = 768 * 64
     activation_files = os.listdir(args.activations_dir)
     os.makedirs(args.output_dir, exist_ok=True)
     with open(args.output_txt_file, "w") as f:
         for n in range(num_activations):
             top_k, top_k_videos = 5, []
             for activation_file, img_path in zip(sorted(activation_files), sorted(img_files)):
+                if not ".npy" in activation_file:
+                    continue
                 activation_npy_path = os.path.join(args.activations_dir, activation_file)
                 activation_neuron = np.load(activation_npy_path).tolist()[n]
                 top_k_videos.append((-activation_neuron, img_path))

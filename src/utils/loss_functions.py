@@ -467,7 +467,7 @@ class ViTSAELoss(nn.Module):
         self.lambda1 = lambda1
         self.lambda2 = lambda2
         self.lambda3 = lambda3
-        self.beta = 0.7  # Weighting factor for cross-entropy loss vs info_nce loss
+        self.beta = 0.3  # Weighting factor for cross-entropy loss vs info_nce loss
 
         # Supervised Contrastive Loss for (Batch, N_Views, Features)
         #self.supconloss = SupConLoss()
@@ -489,6 +489,7 @@ class ViTSAELoss(nn.Module):
         """
         #return self.weighted_bce_loss(logits, binary_tensor) + self.compute_hinton_loss(logits, reconstructed)
         ce_loss =  nn.CrossEntropyLoss()(logits, labels)
+        #ce_loss = nn.BCEWithLogitsLoss()(torch.squeeze(logits), labels)
         mse_loss = nn.MSELoss()(reconstructed, original)
         #hinton_loss = self.compute_hinton_loss(logits2, logits)
         #info_nce_loss = self.sup_con(logits2, logits)
@@ -513,6 +514,6 @@ class ViTSAELoss(nn.Module):
         """This is for abs mse loss"""
         #return self.beta * ce_loss + (1 - self.beta) * info_nce_loss + mse_loss + 4e-5 * sparse_loss
     
-        return ce_loss + (1 - self.beta) * info_nce_loss + mse_loss + 4e-5 * sparse_loss
+        return ce_loss + self.beta * info_nce_loss + mse_loss + 4e-5 * sparse_loss #4e-5 * sparse_loss
         #return torch.nn.functional.mse_loss(reconstructed, original) + 4e-5 * torch.mean(torch.abs(sparse_rep)) + F.cross_entropy(logits, labels)
         #return self.weighted_bce_loss(sparse_rep, binary_tensor) + self.orthogonal_loss(sparse_rep, segments) #+ self.sup_con_loss(sparse_rep, labels)

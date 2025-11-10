@@ -6,3 +6,7 @@ record-vitsae
 .env
 .venv
 .vscode
+activations
+data
+**.txt
+**.zip

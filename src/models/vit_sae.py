@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import ViTModel
-
+from transformers import ViTModel, ViTConfig, CLIPVisionModel
 """
 class ViTSAE(nn.Module):
     def __init__(self, num_classes, d_dim=768, output_attentions=False):
@@ -73,6 +72,9 @@ class ViTSAE(nn.Module):
         super(ViTSAE, self).__init__()
         self.num_classes = num_classes
         self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
+        #self.vit = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch16")
+        #config = ViTConfig()
+        #self.vit = ViTModel(config)
         self.query = nn.Linear(768, 768)
         self.key = nn.Linear(768, 768)
         self.value = nn.Linear(768, 768)
@@ -80,8 +82,8 @@ class ViTSAE(nn.Module):
         self.fc2 = nn.Linear(196, num_classes)
         #self.encoder = nn.Linear(d_dim, num_classes * 5)
         #self.encoder = nn.Linear(196, num_classes * 5)
-        self.encoder = nn.Linear(768, 768*16)
-        self.decoder = nn.Linear(768*16, 768)
+        self.encoder = nn.Linear(768, 768*64)
+        self.decoder = nn.Linear(768*64, 768)
         #self.linear_out = nn.Linear(768, num_classes * 5)
         self.linear_out = nn.Linear(768, num_classes)
         self.linear_out2 = nn.Linear(768, num_classes)
@@ -145,7 +147,8 @@ class VanillaVit(nn.Module):
     def __init__(self, num_classes, d_dim=768, output_attentions=False):
         super(VanillaVit, self).__init__()
         self.num_classes = num_classes
-        self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
+        #self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
+        self.vit = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
         self.linear_out = nn.Linear(d_dim, num_classes)
 
     def forward(self, x):

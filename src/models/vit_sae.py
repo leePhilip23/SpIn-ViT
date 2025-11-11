@@ -67,9 +67,9 @@ class Prune(nn.Module):
         return self.out_conv(x)
     
 
-class ViTSAE(nn.Module):
+class SpInViT(nn.Module):
     def __init__(self, num_classes, d_dim=768, output_attentions=False):
-        super(ViTSAE, self).__init__()
+        super(SpInViT, self).__init__()
         self.num_classes = num_classes
         self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
         #self.vit = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch16")
@@ -140,6 +140,30 @@ class ViTSAE(nn.Module):
         #return sparse_logits, h, recon_logit, logits, whole_output #logits2
 
         """This is for kl div"""
+        return sparse_logits, h, recon_logit, logits, logits2, pool_h
+    
+
+class PatchSAE(nn.Module):
+    def __init__(self, num_classes, d_dim=768, output_attentions=False):
+        super(PatchSAE, self).__init__()
+        self.num_classes = num_classes
+        self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
+        self.encoder = nn.Linear(768, 768*64)
+        self.decoder = nn.Linear(768*64, 768)
+        self.linear_out = nn.Linear(768, num_classes)
+        self.linear_out2 = nn.Linear(768, num_classes)
+
+    def forward(self, x):
+        x = self.vit(x)
+        pool_h = x.last_hidden_state[:, 0]
+        logits = self.linear_out(pool_h)
+        #class_rep = self.sigmoid(self.linear_out(pool_h))
+
+        h = x.last_hidden_state
+        sparse_logits = self.relu(self.encoder(h))
+        recon_logit = self.decoder(sparse_logits)
+        logits2 = None
+
         return sparse_logits, h, recon_logit, logits, logits2, pool_h
     
     

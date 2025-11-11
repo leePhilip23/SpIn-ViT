@@ -449,7 +449,7 @@ class ViTSAELoss(nn.Module):
         loss = -torch.log(numerator / (denominator + 1e-8))  # (B, N)
         return loss.mean()
     
-    def __init__(self, temperature=0.07, lambda1=1, lambda2=1, lambda3=2, num_classes=51):
+    def __init__(self, proposed, temperature=0.07):
         """
         Initializes the loss function with specified weighting factors for different components.
         Args:
@@ -463,15 +463,10 @@ class ViTSAELoss(nn.Module):
             supconloss (SupConLoss): Instance of the SupConLoss class used for supervised contrastive loss.
         """
         super(ViTSAELoss, self).__init__()
+        self.proposed = proposed
         self.temperature = temperature
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.lambda3 = lambda3
         self.beta = 0.3  # Weighting factor for cross-entropy loss vs info_nce loss
 
-        # Supervised Contrastive Loss for (Batch, N_Views, Features)
-        #self.supconloss = SupConLoss()
-        self.inf_nce_loss = SupervisedInfoNCE(temperature=0.07)
         self.orthogonal_loss = OrthogonalLossFunction()  # Adjust num_classes as needed
         self.sup_con = SoftSupConLoss(contrast_mode='one')
 
@@ -500,8 +495,6 @@ class ViTSAELoss(nn.Module):
         """This is with kl loss"""
         #info_nce_loss = self.compute_kl_loss(logits2, logits)
 
-        info_nce_loss = 1 - F.cosine_similarity(logits2, pool_h, dim=-1).mean()
-
         sparse_loss = torch.mean(torch.abs(sparse_logits))
         #return ce_loss + hinton_loss + 0.5 * sparse_loss + mse_loss
         #return ce_loss + sparse_loss + mse_loss
@@ -514,6 +507,7 @@ class ViTSAELoss(nn.Module):
         """This is for abs mse loss"""
         #return self.beta * ce_loss + (1 - self.beta) * info_nce_loss + mse_loss + 4e-5 * sparse_loss
     
-        return ce_loss + self.beta * info_nce_loss + mse_loss + 4e-5 * sparse_loss #4e-5 * sparse_loss
-        #return torch.nn.functional.mse_loss(reconstructed, original) + 4e-5 * torch.mean(torch.abs(sparse_rep)) + F.cross_entropy(logits, labels)
-        #return self.weighted_bce_loss(sparse_rep, binary_tensor) + self.orthogonal_loss(sparse_rep, segments) #+ self.sup_con_loss(sparse_rep, labels)
+        if self.proposed:
+            info_nce_loss = 1 - F.cosine_similarity(logits2, pool_h, dim=-1).mean()
+            return ce_loss + self.beta * info_nce_loss + mse_loss + 4e-5 * sparse_loss #4e-5 * sparse_loss
+        return ce_loss + mse_loss + 4e-5 * sparse_loss

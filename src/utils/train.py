@@ -17,7 +17,7 @@ from utils.dataloader import (
     FolderData
 )
 from utils.loss_functions import ViTSAELoss
-from models.vit_sae import ViTSAE, VanillaVit
+from models.vit_sae import SpInViT, PatchSAE, VanillaVit
 from torch.utils.data import DataLoader
 from torchvision.datasets import Flowers102
 from torchvision import transforms
@@ -75,47 +75,7 @@ def get_dataloader():
             - train_dataloader (DataLoader): DataLoader for the training dataset.
             - test_dataloader (DataLoader): DataLoader for the testing dataset.
     """
-        
 
-    """
-    files = [
-        f for f in glob.glob("data/raw/pets/**/*", recursive=True)
-        if os.path.isfile(f) 
-        and "db" not in f
-        and is_valid_image(f)
-    ]
-    
-    labels = [path.split('/')[-2].split('.')[0] for path in files]
-
-    print('Dog' in labels and 'Cat' in labels)
-    """
-
-    """
-    data = load_from_disk("data/raw/cats_vs_dogs")
-    files, labels = [], []
-    for d in data:
-        img, label = d['image'], d['labels']
-        if not is_val_image(img):
-            continue
-        
-        files.append(img)
-        labels.append(label)
-    """
-    """
-    train, val = train_test_split(
-        files,
-        test_size=0.2,
-        stratify=labels,
-        random_state=1
-    )
-
-
-    train_data = CatsDogsDataset(train, transform="train")
-    val_data = CatsDogsDataset(val)
-    train_dataloader = DataLoader(train_data, batch_size=64, shuffle=True, num_workers=4, pin_memory=True)
-    val_dataloader = DataLoader(val_data, batch_size=32, shuffle=False, num_workers=4, pin_memory=True)
-    test_dataloader, num_classes, class_weights = None, 2, None
-    
     """
     #num_classes, class_weights = 102, None
     #data_train = Flowers102Dataset("train")
@@ -204,10 +164,11 @@ def train_model(args, device, train_dataloader, val_dataloader, num_classes):
     4. Save checkpoints every 5 epochs.
     """
 
-    model = ViTSAE(num_classes).to(device)
-    criterion = ViTSAELoss()
+    model = SpInViT(num_classes).to(device)
+    criterion = ViTSAELoss(proposed=True)
 
-    #model = VanillaVit(num_classes).to(device)
+    model = PatchSAE(num_classes).to(device)
+    criterion = ViTSAELoss(proposed=False)
     #criterion = nn.CrossEntropyLoss()
     #criterion = nn.BCEWithLogitsLoss()
 

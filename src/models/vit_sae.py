@@ -148,6 +148,10 @@ class PatchSAE(nn.Module):
         super(PatchSAE, self).__init__()
         self.num_classes = num_classes
         self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224", output_attentions=output_attentions)
+
+        for param in self.vit.parameters():
+            param.requires_grad = False
+
         self.encoder = nn.Linear(768, 768*64)
         self.decoder = nn.Linear(768*64, 768)
         self.linear_out = nn.Linear(768, num_classes)

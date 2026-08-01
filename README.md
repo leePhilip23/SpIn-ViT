@@ -62,6 +62,6 @@ uv run src/main.py \
     --output_txt_file "record-vitsae/pets/top_k_neurons.txt"
 ```
 
-### Step 4: Inspect Attention Maps
+### Step 4: Inspect Attention Maps and run FOLD-SE-M to Create Rulesets
 
 Use `src/sae_attention_maps.ipynb` to visualize per-neuron attention/activation maps over the top-k images produced in Step 3, and to inspect qualitative examples of monosemantic vs. polysemantic neurons.

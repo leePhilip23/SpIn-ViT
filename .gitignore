@@ -1,12 +1,13 @@
 **__pycache__
-**GTSRB**
-notebooks
 model-vitsae
 record-vitsae
-.env
 .venv
 .vscode
 activations
+config
+foldse
+foldse_res
+interpretability
 data
 **.txt
 **.zip

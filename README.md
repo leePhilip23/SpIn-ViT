@@ -64,4 +64,4 @@ uv run src/main.py \
 
 ### Step 4: Inspect Attention Maps and Run FOLD-SE-M to Create Rulesets
 
-Use `src/spinvit-patches-foldse.ipynb` to visualize per-neuron attention/activation maps over the top-k images produced in Step 3, and to inspect qualitative examples of monosemantic vs. polysemantic neurons.
+Use `notebooks/spinvit-patches-foldse.ipynb` to visualize per-neuron attention/activation maps over the top-k images produced in Step 3, and to inspect qualitative examples of monosemantic vs. polysemantic neurons.

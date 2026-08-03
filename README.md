@@ -18,7 +18,7 @@ This will ensure that all the packages are downloaded in your virtual environmen
 
 Datasets are pulled automatically via [HuggingFace Datasets](https://huggingface.co/docs/datasets) (e.g. `timm/oxford-iiit-pet`) or loaded from a local folder structure, depending on which dataset is configured in `src/utils/train.py::get_dataloader`. Supported datasets include:
 
-- Oxford-IIIT Pets
+- OxfordPets
 - Flowers102
 - Stanford Cars
 - FGVC-Aircraft
@@ -27,9 +27,7 @@ Datasets are pulled automatically via [HuggingFace Datasets](https://huggingface
 - SUN397
 - DTD
 - EuroSAT
-- GTSRB
 - Places365
-- Cats vs. Dogs
 
 For datasets loaded from disk (e.g. Cars, FGVC, SUN397, Places365, GTSRB), place the raw data under `data/raw/<dataset_name>/` before training. For HuggingFace-backed datasets, no manual download is required — they will be fetched and cached automatically on first run.
 

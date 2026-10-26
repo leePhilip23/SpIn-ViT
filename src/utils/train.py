@@ -10,12 +10,7 @@ from utils.dataloader import (
     FolderData
 )
 from utils.loss_functions import ViTSAELoss
-from models.vit_sae import (
-    SpInViT, 
-    VanillaSpInViT, 
-    PatchSAE, 
-    VanillaVit
-)
+from models.vit_sae import SpInViT
 from torch.utils.data import DataLoader
 import math
 from scipy.stats import norm
@@ -78,11 +73,7 @@ def get_dataloader(inference: bool, iteration: int=0, train_batch: int=32, val_b
     elif iteration == 5:
         #Sun397
         num_classes, class_weights = 397, None
-        data = load_dataset("1aurent/SUN397")['train'].train_test_split(
-        test_size=0.2,
-            stratify_by_column='label',
-            seed=42
-        ) 
+        data = load_dataset("tanganke/sun397")
         data_train = HuggingFaceData(data, split='train', too_big=True, inference=inference)
         data_val = HuggingFaceData(data, split='test', too_big=True, inference=inference)
     elif iteration == 6:
@@ -138,8 +129,7 @@ def train_model(args, device, train_dataloader, val_dataloader, num_classes):
     model = SpInViT(
         num_classes, 
         factor=10, 
-        topk=True,
-        separate=False
+        topk=True
     ).to(device)
     criterion = ViTSAELoss(num_cls=num_classes)
     optimizer = optim.AdamW(

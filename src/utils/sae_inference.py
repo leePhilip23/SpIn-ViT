@@ -6,21 +6,12 @@ import shutil
 import torch
 import torch.nn as nn
 import numpy as np
-from datasets import load_from_disk, load_dataset
-from models.vit_sae import (
-    SpInViT, 
-    VanillaSpInViT, 
-    PatchSAE, 
-    VanillaVit
-)
+from models.vit_sae import SpInViT
 from utils.dataloader import (
     HuggingFaceData,
     FolderData
 )
 from utils.train import get_dataloader
-from torch.utils.data import DataLoader 
-from sklearn.model_selection import train_test_split
-from PIL import Image
     
 
 
@@ -32,9 +23,9 @@ def load_vivit_sae_model(args, num_classes):
     Returns:
         dict: Loaded state dictionary.
     """
-    state_dict = torch.load(args.vit_sae_model_pth)
+    state_dict = torch.load(args.vit_sae_model_pth, map_location="cpu")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SpInViT2(num_classes=num_classes, factor=10, topk=True).to(device)
+    model = SpInViT(num_classes=num_classes, factor=10, topk=True).to(device)
     model.load_state_dict(state_dict)
     return model
 
@@ -110,7 +101,6 @@ def get_top_k(args):
     Returns:
         None
     """
-    #_, _, test_dataloader, num_classes, _ = GTSRB_dataloaders()
     test_dataloader, num_classes = get_dataloader(True, iteration=0)
     vit_sae = load_vivit_sae_model(args, num_classes=num_classes)
     img_files = cache_activations(args, vit_sae, test_dataloader)

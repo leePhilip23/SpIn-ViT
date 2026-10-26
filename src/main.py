@@ -5,16 +5,20 @@ import logging
 import torch
 from utils.train import get_dataloader, train_model
 from utils.sae_inference import get_top_k
+from utils.interpretability import save_patch_figures
 
 
 def main(args):
-    if args.train == "true":
+    if args.interpret:
+        print("Saving patch interpretability figures...")
+        save_patch_figures(args, max_images=args.max_images)
+    elif args.train == "true":
         # Create directories for model and log storage
         print("Training the model...")
         datasets = [
             "flowers102",
-            #"cars",
-            #"fgvc",
+            "cars",
+            "fgvc",
             "caltech101",
             "foods101",
             "suns397",
@@ -40,6 +44,7 @@ def main(args):
                 train_model(curr_args, device, train_dataloader, val_dataloader, num_classes)
 
             get_top_k(args)
+            save_patch_figures(args, max_images=args.max_images)
         else:
             i = datasets.index(args.dataset_name)
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -49,6 +54,9 @@ def main(args):
     else:
         print("Getting top-k neurons...")
         get_top_k(args)
+        
+        print("Saving patch interpretability figures...")
+        save_patch_figures(args, max_images=args.max_images)
     
 
 if __name__ == '__main__':
@@ -87,6 +95,11 @@ if __name__ == '__main__':
         default=os.path.join("record-vitsae", "flowers102", "top_k_neurons.txt"),
         help="Path to the output text file.",
     )
+
+    # Interpretability parameters
+    parser.add_argument("--interpret", action="store_true", help="Save SpInViT patch highlight figures")
+    parser.add_argument("--interp_dir", type=str, default="interpretability", help="Directory to save the figures.")
+    parser.add_argument("--max_images", type=int, default=None, help="Max number of figures to save.")
 
     args = parser.parse_args()
     main(args)
